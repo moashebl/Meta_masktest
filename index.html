@@ -2,42 +2,47 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>My dApp</title>
+  <title>Note Keeper dApp</title>
 </head>
 <body>
-  <button id="connect">MetaMask'e Bağlan</button>
-  <button id="read">Değeri Oku</button>
-  <button id="write">Artır (increment)</button>
+  <h2>🗒️ Note Keeper dApp</h2>
+
+  <button id="connect">Connect MetaMask</button>
+  <br><br>
+
+  <textarea id="note" placeholder="Write your note here..." rows="4" cols="40"></textarea><br>
+  <button id="save">Save Note</button>
+  <button id="get">Get My Note</button>
+
   <pre id="out"></pre>
 
-  <!-- Ethers v6 UMD -->
+  <!-- Ethers.js v6 -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 
   <script>
-    const CONTRACT_ADDRESS = "0x48E3Aee8C6f4240F1255CF38797AE3BAfcD74eb5";
-    const ABI = [
+    const CONTRACT_ADDRESS = "0xcfdeB4FE7C4150D13BB88F3d662c0576AdF50252";
+    const ABI =[
 	{
-		"inputs": [],
-		"name": "decrement",
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_note",
+				"type": "string"
+			}
+		],
+		"name": "saveNote",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
 		"inputs": [],
-		"name": "increment",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "get",
+		"name": "getMyNote",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "string",
 				"name": "",
-				"type": "uint256"
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",
@@ -48,24 +53,26 @@
     let provider, signer, contract;
 
     async function connect() {
-      if (!window.ethereum) return alert("MetaMask gerekli.");
+      if (!window.ethereum) return alert("Please install MetaMask!");
       provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       signer = await provider.getSigner();
       contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-      log("Bağlandı: " + await signer.getAddress());
+      log("Connected: " + await signer.getAddress());
     }
 
-    async function read() {
-      const v = await contract.get();
-      log("Değer: " + v.toString());
-    }
-
-    async function write() {
-      const tx = await contract.increment();
-      log("Gönderildi: " + tx.hash);
+    async function saveNote() {
+      const note = document.getElementById("note").value;
+      if (!note) return alert("Please write something!");
+      const tx = await contract.saveNote(note);
+      log("Saving note... Tx: " + tx.hash);
       await tx.wait();
-      log("Onaylandı.");
+      log("✅ Note saved successfully!");
+    }
+
+    async function getNote() {
+      const note = await contract.getMyNote();
+      log("📝 Your Note: " + note);
     }
 
     function log(m) {
@@ -73,8 +80,8 @@
     }
 
     document.getElementById("connect").onclick = connect;
-    document.getElementById("read").onclick = read;
-    document.getElementById("write").onclick = write;
+    document.getElementById("save").onclick = saveNote;
+    document.getElementById("get").onclick = getNote;
   </script>
 </body>
 </html>
