@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Simple Payment DApp</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 0.9em;
+    }
+
+    .wallet-info {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .wallet-address {
+      font-family: 'Courier New', monospace;
+      font-size: 0.85em;
+      margin-top: 10px;
+      opacity: 0.9;
+    }
+
+    .balance-display {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .balance-label {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .stat-item {
+      background: rgba(255,255,255,0.2);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .stat-label {
+      font-size: 0.8em;
+      opacity: 0.9;
+      margin-top: 5px;
+    }
+
+    .section {
+      margin: 25px 0;
+    }
+
+    .section-title {
+      color: #667eea;
+      font-size: 1.2em;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .console {
+      background: #1a202c;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 25px 0;
+    }
+
+    .emoji {
+      font-size: 1.5em;
+      margin-right: 10px;
+    }
+
+    .info-box {
+      background: #f0f7ff;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-size: 0.9em;
+      color: #555;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 25px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .balance-display {
+        font-size: 2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>� Receive ETH</h1>
+    <p class="subtitle">Track Your Received ETH!</p>
+
+    <!-- Connect Button -->
+    <div id="connectSection">
+      <button onclick="connectWallet()">🔗 Connect MetaMask</button>
+      <div class="info-box">
+        Connect your wallet to track ETH you receive!
+      </div>
+    </div>
+
+    <!-- Main App (hidden until connected) -->
+    <div id="mainApp" style="display: none;">
+      
+      <!-- Wallet Info -->
+      <div class="wallet-info">
+        <div class="balance-label">Your Wallet Balance</div>
+        <div class="balance-display" id="walletBalance">0.00</div>
+        <div class="balance-label">ETH</div>
+        <div class="wallet-address" id="walletAddress"></div>
+
+        <div class="stats">
+          <div class="stat-item" style="grid-column: 1 / -1;">
+            <div class="stat-value" id="totalReceived">0.00</div>
+            <div class="stat-label">📥 Total Received via DApp</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receive Section -->
+      <div class="section">
+        <div class="section-title"><span class="emoji">�</span>Receive Money</div>
+        <input type="number" id="receiveAmount" placeholder="Amount in ETH (e.g., 0.01)" step="0.001" min="0">
+        <button onclick="depositMoney()">� Deposit ETH</button>
+        <div class="info-box">
+          Deposit ETH to track it in the DApp. Your balance stays in your wallet!
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Quick Actions -->
+      <div class="section">
+        <div class="section-title"><span class="emoji">⚡</span>Quick Actions</div>
+        <button class="btn-success" onclick="refreshBalance()">🔄 Refresh Balance</button>
+      </div>
+
+      <!-- Console -->
+      <div id="console" class="console">Ready to receive ETH...</div>
+    </div>
+  </div>
+
+  <!-- Ethers.js v6 -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+
+  <script>
+    // REPLACE WITH YOUR DEPLOYED CONTRACT ADDRESS
+    const CONTRACT_ADDRESS = "0x540d7E428D5207B30EE03F2551Cbb5751D3c7569";
+
+    const ABI = [
+      {
+        "inputs": [],
+        "name": "deposit",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMyTotalReceived",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getContractBalance",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "name": "totalReceived",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "stateMutability": "payable",
+        "type": "receive"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {"indexed": true, "internalType": "address", "name": "from", "type": "address"},
+          {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+        ],
+        "name": "MoneyReceived",
+        "type": "event"
+      }
+    ];
+
+    let provider, signer, contract, userAddress;
+
+    // Connect Wallet
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) {
+          alert("Please install MetaMask!");
+          log("❌ MetaMask not found!");
+          return;
+        }
+
+        log("🔌 Connecting to MetaMask...");
+        
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        userAddress = await signer.getAddress();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        // Show main app
+        document.getElementById('connectSection').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+
+        // Display wallet address
+        document.getElementById('walletAddress').textContent = 
+          `${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
+
+        log(`✅ Connected: ${userAddress}`);
+        
+        // Load balance
+        await refreshBalance();
+
+      } catch (error) {
+        log(`❌ Connection failed: ${error.message}`);
+        alert(`Connection failed: ${error.message}`);
+      }
+    }
+
+    // Refresh Balance
+    async function refreshBalance() {
+      try {
+        log("🔄 Refreshing balance...");
+
+        // Get wallet balance
+        const balance = await provider.getBalance(userAddress);
+        const balanceInEth = ethers.formatEther(balance);
+        document.getElementById('walletBalance').textContent = parseFloat(balanceInEth).toFixed(4);
+
+        // Get total received
+        const totalReceived = await contract.getMyTotalReceived();
+        document.getElementById('totalReceived').textContent = parseFloat(ethers.formatEther(totalReceived)).toFixed(4);
+
+        log("✅ Balance updated!");
+
+      } catch (error) {
+        log(`❌ Error refreshing: ${error.message}`);
+      }
+    }
+
+    // Deposit Money
+    async function depositMoney() {
+      try {
+        const amount = document.getElementById('receiveAmount').value;
+
+        // Validation
+        if (!amount || parseFloat(amount) <= 0) {
+          alert("Please enter a valid amount");
+          return;
+        }
+
+        log(`� Depositing ${amount} ETH...`);
+
+        const amountInWei = ethers.parseEther(amount);
+        const tx = await contract.deposit({ value: amountInWei });
+        
+        log(`⏳ Transaction sent: ${tx.hash}`);
+        log("⏳ Waiting for confirmation...");
+
+        await tx.wait();
+        
+        log(`✅ Success! Deposited ${amount} ETH`);
+
+        // Clear input
+        document.getElementById('receiveAmount').value = '';
+
+        // Refresh balance
+        await refreshBalance();
+
+      } catch (error) {
+        log(`❌ Deposit failed: ${error.message}`);
+        alert(`Transaction failed: ${error.message}`);
+      }
+    }
+
+    // Log function
+    function log(message) {
+      const consoleEl = document.getElementById('console');
+      const timestamp = new Date().toLocaleTimeString();
+      consoleEl.textContent += `[${timestamp}] ${message}\n`;
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    // Auto-connect if already connected
+    window.addEventListener('load', async () => {
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        await connectWallet();
+      }
+    });
+
+    // Listen for account changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+          location.reload();
+        } else {
+          connectWallet();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
