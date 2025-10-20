@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Payment DApp - Send & Receive ETH</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .wallet-info {
+      background: rgba(255,255,255,0.95);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.3s;
+      margin: 5px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .transaction-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .transaction-item {
+      background: #f8f9fa;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+      transition: all 0.3s;
+    }
+
+    .transaction-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .tx-sent {
+      border-left-color: #f5576c;
+    }
+
+    .tx-received {
+      border-left-color: #00f2fe;
+    }
+
+    .tx-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .tx-amount {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #2d3748;
+    }
+
+    .tx-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: bold;
+    }
+
+    .badge-sent {
+      background: #ffe0e0;
+      color: #f5576c;
+    }
+
+    .badge-received {
+      background: #d4f4ff;
+      color: #00a8cc;
+    }
+
+    .tx-details {
+      font-size: 0.9em;
+      color: #666;
+      margin: 5px 0;
+    }
+
+    .tx-message {
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-style: italic;
+      color: #555;
+    }
+
+    .address {
+      font-family: 'Courier New', monospace;
+      font-size: 0.85em;
+      background: #e0e0e0;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .console {
+      background: #1a202c;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      background: #e0e0e0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💸 Payment DApp</h1>
+      <p>Send and Receive ETH on the Blockchain</p>
+    </div>
+
+    <!-- Wallet Info -->
+    <div class="wallet-info">
+      <div style="text-align: center; margin-bottom: 15px;">
+        <button id="connectBtn" onclick="connectWallet()">🔗 Connect MetaMask</button>
+        <div id="walletAddress" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">My Balance</div>
+          <div class="stat-value" id="myBalance">0</div>
+          <div class="stat-label">ETH</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Sent</div>
+          <div class="stat-value" id="totalSent">0</div>
+          <div class="stat-label">ETH</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Received</div>
+          <div class="stat-value" id="totalReceived">0</div>
+          <div class="stat-label">ETH</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Transactions</div>
+          <div class="stat-value" id="totalTx">0</div>
+          <div class="stat-label">Txs</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Send Payment Section -->
+      <div class="card">
+        <h2>📤 Send Payment</h2>
+        <input type="text" id="receiverAddress" placeholder="Receiver Address (0x...)">
+        <input type="number" id="amount" placeholder="Amount in ETH (e.g., 0.01)" step="0.001" min="0">
+        <textarea id="message" placeholder="Message (optional)" rows="3"></textarea>
+        <button onclick="sendPayment()">💸 Send Payment</button>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <h2>⚡ Quick Actions</h2>
+        <button class="btn-success" onclick="loadStats()">🔄 Refresh Stats</button>
+        <button class="btn-secondary" onclick="loadTransactions()">📜 Load Transactions</button>
+        <button class="btn-secondary" onclick="loadAllTransactions()">🌐 View All Transactions</button>
+        <div style="margin-top: 20px;">
+          <h3 style="font-size: 1.1em; margin-bottom: 10px;">Check Address Balance</h3>
+          <input type="text" id="checkAddress" placeholder="Enter address to check">
+          <button onclick="checkBalance()">🔍 Check Balance</button>
+          <div id="checkedBalance" style="margin-top: 10px; font-weight: bold; color: #667eea;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions Section -->
+    <div class="card">
+      <h2>📊 Transaction History</h2>
+      
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('sent')">📤 Sent</button>
+        <button class="tab" onclick="switchTab('received')">📥 Received</button>
+        <button class="tab" onclick="switchTab('all')">🌐 All</button>
+      </div>
+
+      <div id="sent-tab" class="tab-content active">
+        <div id="sentTransactions" class="transaction-list"></div>
+      </div>
+
+      <div id="received-tab" class="tab-content">
+        <div id="receivedTransactions" class="transaction-list"></div>
+      </div>
+
+      <div id="all-tab" class="tab-content">
+        <div id="allTransactions" class="transaction-list"></div>
+      </div>
+    </div>
+
+    <!-- Console -->
+    <div class="card">
+      <h2>🖥️ Console</h2>
+      <div id="console" class="console">Waiting for wallet connection...</div>
+    </div>
+  </div>
+
+  <!-- Ethers.js v6 -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+
+  <script>
+    // REPLACE WITH YOUR DEPLOYED CONTRACT ADDRESS
+    const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS_HERE";
+
+    const ABI = [
+      {
+        "inputs": [
+          {"internalType": "address payable", "name": "_receiver", "type": "address"},
+          {"internalType": "string", "name": "_message", "type": "string"}
+        ],
+        "name": "sendPayment",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMyTransactions",
+        "outputs": [
+          {
+            "components": [
+              {"internalType": "address", "name": "sender", "type": "address"},
+              {"internalType": "address", "name": "receiver", "type": "address"},
+              {"internalType": "uint256", "name": "amount", "type": "uint256"},
+              {"internalType": "string", "name": "message", "type": "string"},
+              {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+              {"internalType": "uint256", "name": "transactionId", "type": "uint256"}
+            ],
+            "internalType": "struct PaymentDApp.Transaction[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getReceivedTransactions",
+        "outputs": [
+          {
+            "components": [
+              {"internalType": "address", "name": "sender", "type": "address"},
+              {"internalType": "address", "name": "receiver", "type": "address"},
+              {"internalType": "uint256", "name": "amount", "type": "uint256"},
+              {"internalType": "string", "name": "message", "type": "string"},
+              {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+              {"internalType": "uint256", "name": "transactionId", "type": "uint256"}
+            ],
+            "internalType": "struct PaymentDApp.Transaction[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getAllTransactions",
+        "outputs": [
+          {
+            "components": [
+              {"internalType": "address", "name": "sender", "type": "address"},
+              {"internalType": "address", "name": "receiver", "type": "address"},
+              {"internalType": "uint256", "name": "amount", "type": "uint256"},
+              {"internalType": "string", "name": "message", "type": "string"},
+              {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+              {"internalType": "uint256", "name": "transactionId", "type": "uint256"}
+            ],
+            "internalType": "struct PaymentDApp.Transaction[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{"internalType": "address", "name": "_address", "type": "address"}],
+        "name": "getBalance",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMyTotalSent",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMyTotalReceived",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMySentCount",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMyReceivedCount",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "transactionCount",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {"indexed": true, "internalType": "uint256", "name": "transactionId", "type": "uint256"},
+          {"indexed": true, "internalType": "address", "name": "sender", "type": "address"},
+          {"indexed": true, "internalType": "address", "name": "receiver", "type": "address"},
+          {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+          {"indexed": false, "internalType": "string", "name": "message", "type": "string"},
+          {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+        ],
+        "name": "PaymentSent",
+        "type": "event"
+      }
+    ];
+
+    let provider, signer, contract, userAddress;
+
+    // Connect Wallet
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) {
+          log("❌ Please install MetaMask!");
+          alert("Please install MetaMask!");
+          return;
+        }
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        userAddress = await signer.getAddress();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        document.getElementById('walletAddress').innerHTML = 
+          `✅ <span class="address">${userAddress}</span>`;
+        
+        log(`✅ Connected: ${userAddress}`);
+        
+        // Load initial data
+        await loadStats();
+        await loadTransactions();
+
+      } catch (error) {
+        log(`❌ Connection Error: ${error.message}`);
+      }
+    }
+
+    // Load user statistics
+    async function loadStats() {
+      try {
+        log("📊 Loading statistics...");
+
+        // Get balance
+        const balance = await provider.getBalance(userAddress);
+        const balanceInEth = ethers.formatEther(balance);
+        document.getElementById('myBalance').textContent = parseFloat(balanceInEth).toFixed(4);
+
+        // Get total sent
+        const totalSent = await contract.getMyTotalSent();
+        document.getElementById('totalSent').textContent = parseFloat(ethers.formatEther(totalSent)).toFixed(4);
+
+        // Get total received
+        const totalReceived = await contract.getMyTotalReceived();
+        document.getElementById('totalReceived').textContent = parseFloat(ethers.formatEther(totalReceived)).toFixed(4);
+
+        // Get transaction counts
+        const sentCount = await contract.getMySentCount();
+        const receivedCount = await contract.getMyReceivedCount();
+        document.getElementById('totalTx').textContent = Number(sentCount) + Number(receivedCount);
+
+        log("✅ Statistics loaded successfully");
+
+      } catch (error) {
+        log(`❌ Error loading stats: ${error.message}`);
+      }
+    }
+
+    // Send Payment
+    async function sendPayment() {
+      try {
+        const receiver = document.getElementById('receiverAddress').value.trim();
+        const amount = document.getElementById('amount').value;
+        const message = document.getElementById('message').value.trim();
+
+        if (!receiver || !ethers.isAddress(receiver)) {
+          log("⚠️ Please enter a valid receiver address");
+          alert("Please enter a valid receiver address");
+          return;
+        }
+
+        if (!amount || parseFloat(amount) <= 0) {
+          log("⚠️ Please enter a valid amount");
+          alert("Please enter a valid amount greater than 0");
+          return;
+        }
+
+        log(`💸 Sending ${amount} ETH to ${receiver}...`);
+
+        const amountInWei = ethers.parseEther(amount);
+        const tx = await contract.sendPayment(receiver, message || "", { value: amountInWei });
+        
+        log(`⏳ Transaction sent: ${tx.hash}`);
+        log("⏳ Waiting for confirmation...");
+
+        await tx.wait();
+        
+        log(`✅ Payment sent successfully!`);
+        log(`✅ Amount: ${amount} ETH`);
+        log(`✅ To: ${receiver}`);
+
+        // Clear form
+        document.getElementById('receiverAddress').value = '';
+        document.getElementById('amount').value = '';
+        document.getElementById('message').value = '';
+
+        // Reload stats and transactions
+        await loadStats();
+        await loadTransactions();
+
+      } catch (error) {
+        log(`❌ Payment Error: ${error.message}`);
+        alert(`Error: ${error.message}`);
+      }
+    }
+
+    // Load transactions
+    async function loadTransactions() {
+      try {
+        log("📜 Loading transactions...");
+
+        // Load sent transactions
+        const sentTxs = await contract.getMyTransactions();
+        displayTransactions(sentTxs, 'sentTransactions', 'sent');
+
+        // Load received transactions
+        const receivedTxs = await contract.getReceivedTransactions();
+        displayTransactions(receivedTxs, 'receivedTransactions', 'received');
+
+        log(`✅ Loaded ${sentTxs.length} sent and ${receivedTxs.length} received transactions`);
+
+      } catch (error) {
+        log(`❌ Error loading transactions: ${error.message}`);
+      }
+    }
+
+    // Load all transactions
+    async function loadAllTransactions() {
+      try {
+        log("🌐 Loading all transactions...");
+        const allTxs = await contract.getAllTransactions();
+        displayTransactions(allTxs, 'allTransactions', 'all');
+        log(`✅ Loaded ${allTxs.length} total transactions`);
+      } catch (error) {
+        log(`❌ Error loading all transactions: ${error.message}`);
+      }
+    }
+
+    // Display transactions
+    function displayTransactions(transactions, elementId, type) {
+      const container = document.getElementById(elementId);
+      
+      if (transactions.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size: 3em;">📭</div>
+            <p>No transactions yet</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      
+      // Reverse to show newest first
+      const reversedTxs = [...transactions].reverse();
+
+      reversedTxs.forEach(tx => {
+        const isSent = tx.sender.toLowerCase() === userAddress.toLowerCase();
+        const isReceived = tx.receiver.toLowerCase() === userAddress.toLowerCase();
+        
+        let badge = '';
+        let txClass = '';
+        
+        if (type === 'all') {
+          if (isSent) {
+            badge = '<span class="tx-badge badge-sent">📤 SENT</span>';
+            txClass = 'tx-sent';
+          } else if (isReceived) {
+            badge = '<span class="tx-badge badge-received">📥 RECEIVED</span>';
+            txClass = 'tx-received';
+          }
+        } else if (type === 'sent') {
+          badge = '<span class="tx-badge badge-sent">📤 SENT</span>';
+          txClass = 'tx-sent';
+        } else {
+          badge = '<span class="tx-badge badge-received">📥 RECEIVED</span>';
+          txClass = 'tx-received';
+        }
+
+        const amount = ethers.formatEther(tx.amount);
+        const date = new Date(Number(tx.timestamp) * 1000).toLocaleString();
+        
+        html += `
+          <div class="transaction-item ${txClass}">
+            <div class="tx-header">
+              <div class="tx-amount">💰 ${parseFloat(amount).toFixed(4)} ETH</div>
+              ${badge}
+            </div>
+            <div class="tx-details">
+              <strong>From:</strong> <span class="address">${tx.sender}</span>
+            </div>
+            <div class="tx-details">
+              <strong>To:</strong> <span class="address">${tx.receiver}</span>
+            </div>
+            <div class="tx-details">
+              <strong>Date:</strong> ${date}
+            </div>
+            <div class="tx-details">
+              <strong>TX ID:</strong> #${tx.transactionId.toString()}
+            </div>
+            ${tx.message ? `<div class="tx-message">💬 "${tx.message}"</div>` : ''}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Check balance of any address
+    async function checkBalance() {
+      try {
+        const address = document.getElementById('checkAddress').value.trim();
+        
+        if (!address || !ethers.isAddress(address)) {
+          alert("Please enter a valid address");
+          return;
+        }
+
+        const balance = await contract.getBalance(address);
+        const balanceInEth = ethers.formatEther(balance);
+        
+        document.getElementById('checkedBalance').textContent = 
+          `Balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`;
+        
+        log(`💰 Balance of ${address}: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
+
+      } catch (error) {
+        log(`❌ Error checking balance: ${error.message}`);
+      }
+    }
+
+    // Switch tabs
+    function switchTab(tabName) {
+      // Remove active class from all tabs and content
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      // Add active class to selected tab and content
+      event.target.classList.add('active');
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+
+      // Load all transactions if "all" tab is clicked
+      if (tabName === 'all') {
+        loadAllTransactions();
+      }
+    }
+
+    // Log to console
+    function log(message) {
+      const console = document.getElementById('console');
+      const timestamp = new Date().toLocaleTimeString();
+      console.textContent += `[${timestamp}] ${message}\n`;
+      console.scrollTop = console.scrollHeight;
+    }
+
+    // Auto-connect on page load if already connected
+    window.addEventListener('load', () => {
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        connectWallet();
+      }
+    });
+  </script>
+</body>
+</html>
